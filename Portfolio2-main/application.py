@@ -20,12 +20,8 @@ ack_window_size = 64
 # Time interval to be used for timeout
 time_interval = 0.5
 
- # Description: 
- # Converts val to an int
- # Arguments: 
- # val: given value to convert
- # Tries to convert to int and return the new value
- # returns an error if it doesn't work
+ #Converts the Port and window values to int
+ #Stopps the program if the inserted values can't be converted
  
 def convertToInt(val):
     try:
@@ -34,12 +30,8 @@ def convertToInt(val):
         raise argparse.ArgumentTypeError('Expected an integer but you entered a string')
     return value
 
- # Description: 
- # Checks for valid IP
- # Arguments: 
- # val: given value to check
- # Checks if the IP address given in val is valid and returns it
- # Tells the user that the IP address is not valid if it fails.
+ #Checks if the IP that was inserted is the right format
+ #Stopps the program if it isn't.
 
 def check_IP(val):
     try:
@@ -49,12 +41,9 @@ def check_IP(val):
         sys.exit()
     return value
 
- # Description: 
- # Checks if port number is valid
- # Arguments: 
- # val: given value check
- # converts port number to int and checks if it's valid
- # Tell user that it's not valid if it fails.
+
+ #Checks if the inserted port is an int and within the right range for a port value
+ #Stopps the program if it is not in the right range.
 
 def check_port(val):
     #Tries to convert the specified value to an integer
@@ -65,27 +54,9 @@ def check_port(val):
         sys.exit()
     return value
 
-
-
- # Description: 
- # Checks if given testcase is valid
- # Arguments: 
- # val: given value to check
- # Checks if val is a valid test case and returns it.
- # Tells user that the given protocol is invalid if it fails.
-
-def check_testCase(val):
-    if (val not in ['skip_ack', 'skip_seq_num']):
-        print(f'{val} is not a valid test case')
-        sys.exit()
-    return val
-
- # Description: 
- # Checks if given window size is valid.
- # Arguments: 
- # val: given value to check
- # converts val to int and checks if it's a valid window size and returns it
- # Tells user that it's an invalid window size if it fails.
+#Checks if the window size selected is what is set.
+#Numbers selected from requirements in the exam task.
+#Exit the system if not correct
 
 def check_windowSize(val):
     value = convertToInt(val)
@@ -93,70 +64,33 @@ def check_windowSize(val):
         print(f'{value} is not a valid window size')
         sys.exit()
     return value
-
- # Description: 
- # Creates a packet
- # Arguments: 
- # seq: holds sequence number
- # ack: holds the acknowledgement
- # flags: holds the flag
- # win: Holds the window
- # data: holds the data
- # Packs seq, ack, flags, and window size using header_format into a header
- # then creates a packet with the header and data.
- # returns: the full packet to be sent
+ 
+ #Creates the packet 
+ #With 
+ #seq = holds the sequence number
+ #ack = holds the acknowlagment
+ #flags = holds the flags
+ #Then data that is going to be sendt with said packet
+ #Then returns the complete packet
+ 
 
 def create_packet(seq, ack, flags, data):
     header = pack (header_format, seq, ack, flags)
     packet = header + data
     return packet
 
- # Description: 
- # Function that parses header
- # Arguments: 
- # header: Holds the header
- # Takes in a header and uses the header_format to parse it.
- # returns: parsed header
+#Function that parses the header
 
 def parse_header(header):
     header_from_msg = unpack(header_format, header)
     return header_from_msg
-
- # Description: 
- # parses flags
- # Arguments: 
- # flags: holds flags
- # Sets syn, ack, and fin based on flags
- # returns syn, ack, and fin
-
-def parse_flags(flags):
-    syn = flags & (1 << 3)
-    ack = flags & (1 << 2)
-    fin = flags & (1 << 1)
-    rest = flags &(1 << 0)
-    return syn, ack, fin
-
- # Description: 
- # calculates throughput
- # Arguments: 
- # start_time: holds start_time
- # end_time: holds end_time
- # bytes: holds the amount of bytes
- # Finds duration based on start_time and end_time
- # then calculates throughput by getting the bytes and duration to the right format and dividing bytes by duration.
- # returns: throughput
 
 def calculateThroughput(start_time, end_time, bytes):
     duration = end_time - start_time    # Calculate the duration by subtracting start time from end time
     throughput = (bytes * 8) / (duration * 1000000)     # Calculate the throughput in megabits per second
     return throughput
 
- # Description: 
- # restructures file
- # Arguments: 
- # file: holds the file to restruct
- # constructs the file in the right order based on buffered packets
- # prints when it's done and returns nothing as the function is used to write to file.
+ #Function that reconstructs the file after its been sendt
 
 def restructFile(file):
     recv_buffer.sort(key=lambda x: x[0])    # Sort the received buffer based on sequence numbers
@@ -165,12 +99,9 @@ def restructFile(file):
         file.write(packet[header_size:])
     print("Done constructing")
 
- # Description: 
- # Function that reads data from a file
- # Makes a data array and takes file_path from sys arguments.
- # opens filepath and reads data from it and appends into the data array
- # prints error if something is wrong with the file or path
- # returns data array
+ #Function that reads the file and adds it to an array
+ #Also checks if the selected file is empty or is unreadeble
+ #If so closes the system with a warning
 
 def readDataFromFile():
     # Setup Array for data and get filepath from sys arguments
@@ -197,12 +128,7 @@ def readDataFromFile():
 
     return dataArr
 
- # Description: 
- # closes the connection
- # Arguments: 
- # clientSocket: holds the clientSocket
- # creates a fin packet and sends it to server to close the connection gracefully
- # closes the socket after.
+#Closes the connection
 
 def closeConnection(clientSocket): 
     # get server details
@@ -214,17 +140,10 @@ def closeConnection(clientSocket):
     clientSocket.sendto(packet, (serverIP, serverPort))
     print("Sent FIN from client")
     # Close client
+    print("I hearby annouce this socket closed") #Gracefully closing the socket
     clientSocket.close()
 
- # Description: 
- # handshake from serverside
- # Arguments: 
- # serverSocket: Holds serverSocket
- # header: holds the header
- # clientAddress: holds the address for client
- # sets seq and ack numbers to 0 to synchronize for communication with client
- # creates syn packet and sends to client then returns true
- # returns false and tells user that server didn't receive SYN from client.
+ #Server side handshake
 
 def serverHandshake(serverSocket, header, clientAddress):
     recv_seq, recv_ck, recv_flags = parse_header(header)
@@ -242,25 +161,19 @@ def serverHandshake(serverSocket, header, clientAddress):
     print("Failed to receive SYN from client at address", clientAddress)
     return False        # Handshake failed
 
- # Description: 
- # Handshake from client
- # Arguments: 
- # clientSocket: holds the clientSocket
- # sets seq and ack to 0, then creates a SYN packet and sends to server
- # Receives a packet from server and checks if the SYN packet from server is correct
- # Sends acknowledgement of synchronization if successful and returns true
- # returns false and say what went wrong if not
 
-def clientHandshake(clientSocket):
-    serverIP = str(args.serverIP)
-    serverPort = args.port
+ #Client side handshake
+
+def clientHandshake(clientSocket, serveraddress):
+    #serverIP = str(args.serverIP)
+    #serverPort = args.port
     
     sequence_num = 0
     ack_num = 0
     data = b''   # No data is included in the packet
 
     packet = create_packet(sequence_num, ack_num, syn_flag, data)
-    clientSocket.sendto(packet, (serverIP, serverPort))
+    clientSocket.sendto(packet, (serveraddress))
     clientSocket.settimeout(time_interval) 
 
     try:
@@ -283,20 +196,14 @@ def clientHandshake(clientSocket):
         return False        # Handshake failed
 
 
- # Description: 
- # client for go-back-N
- # Arguments: 
- # clientSocket: holds the client socket
- # dataArr: holds the data array
- # if packets are unacked append them to unacked packets array and check for testcase
- # Send data to server and wait for acknowledgements
- # closes connection after transfer and returns amount of sent bytes.
+ #The code for the filesharing
+ #Decided to make this a separate function for easier debugging and advice from a friend
 
-def goBackNClient(clientSocket, dataArr):
+def clientFileSharing(clientSocket, dataArr):
     serverIP = str(args.serverIP)
     serverPort = args.port
     window = args.windowSize
-    testCase = args.testCase    
+    discard = args.discard    
     skipped_seq_num = False     # Flag to indicate if a sequence number was skipped in the test case
     base = 0
     next_seq_num = 0
@@ -313,15 +220,6 @@ def goBackNClient(clientSocket, dataArr):
             data = dataArr[next_seq_num]    # Get the data for the next sequence number
             packet = create_packet(next_seq_num, ack_num, flags, data)
             unackedPackets.append((next_seq_num, packet))   # Add the packet to the list of unacknowledged packets
-
-            # Check if the current sequence number needs to be skipped based on the test case
-            if(next_seq_num == 4 and testCase == 'skip_seq_num' and not skipped_seq_num):
-                print("Skipped sending", next_seq_num)
-                for seq_num, packet in unackedPackets:
-                    print("Unacked list:", seq_num)
-                next_seq_num += 1
-                skipped_seq_num = True
-                continue
 
             clientSocket.sendto(packet, (serverIP, serverPort))
             print("Sending packet ", next_seq_num)
@@ -349,28 +247,20 @@ def goBackNClient(clientSocket, dataArr):
     closeConnection(clientSocket) # Close socket connection
     return sent_bytes   # return total number of bytes sent
 
- # Description: 
- # Server for Go-Back-N and Stop and wait
- # Arguments: 
- # serverSocket: Holds the server socket
- # clientAddress: holds the client address info
- # file: holds the file
- # recv_seq: holds the received sequence
- # data: holds the data
- # checks for test case
- # receives packets from client and sends acknowledgements back.
+ #Serverside filesharing protocol
+ #Again kept as a separate function for easier debugging and advice from a friend
 
-def gbnSwServer(serverSocket, clientAddress, file, recv_seq, data):
+def serverFileSharing(serverSocket, clientAddress, file, recv_seq, data):
     global expected_seq_num
-    global testCase     # The current test case being executed
     global skipped_ack
     sent_data = b''     # Placeholder for sent data (empty in this case)
-
+    discard = args.discard
+    
     # Check if the expected sequence number matches the condition to skip ACK
-    if(expected_seq_num == 4 and testCase == 'skip_ack' and not skipped_ack):
+    if(expected_seq_num == discard):
         print(f"Received packet {recv_seq}. Skipping ACK ", expected_seq_num)
         skipped_ack = True
-        testCase = ""
+        discard = -1
     # Check if the received sequence number matches the expected sequence number
     elif(recv_seq == expected_seq_num):
         file.write(data)    # Write the received data to the file
@@ -383,16 +273,15 @@ def gbnSwServer(serverSocket, clientAddress, file, recv_seq, data):
         # Discard the packet if its sequence number doesn't match the expected sequence number
         print(f"Discarded packet {recv_seq}")
 
- # Description: 
- # Runs the client
- # Creates a socket and creates a data array using readDataFromFile()
- # Initiates handshake to ensure a good connection
- # Starts appropriate client based on system argument
- # After client is done running, prints throughput and total amount of bytes sent.
+ #Client that is started if selected
+ #Creates the UDP socket and checks the selected file before starting the handshake
+ #Then starts the filesharing client side and the calculation
+ #When done prints out the throughput
 
 def client():
     clientSocket = socket(AF_INET, SOCK_DGRAM)  # Create a UDP socket for the client
     sent_bytes = 0
+    serveraddress = (args.serverIP, args.port)
 
     dataArr = readDataFromFile()    # Read data from a file and store it in an array
 
@@ -401,7 +290,7 @@ def client():
         print("The specified file is empty")
         sys.exit()
 
-    handshake = clientHandshake(clientSocket)   # Perform the client-side handshake
+    handshake = clientHandshake(clientSocket, serveraddress)   # Perform the client-side handshake
 
     # Check if the handshake was unsuccessful, if yes, exit
     if not handshake:
@@ -411,16 +300,16 @@ def client():
     start_time = time.time()    # Record the start time for calculating throughput
     
     
-    sent_bytes = goBackNClient(clientSocket, dataArr)
+    sent_bytes = clientFileSharing(clientSocket, dataArr) #Starts the filesharing function
     
 
     end_time = time.time()  # Record the end time for calculating throughput
     
-    if(not args.testCase):
-        # Check if a test case was not specified
-        throughput = calculateThroughput(start_time, end_time, sent_bytes)
-        print("Sent bytes:", sent_bytes)
-        print(f'{throughput:.2f} Mbps')
+
+    # Check if a test case was not specified
+    throughput = calculateThroughput(start_time, end_time, sent_bytes)
+    print("Sent bytes:", sent_bytes)
+    print(f'{throughput:.2f} Mbps')
  
  # Description: 
  # Runs the server
@@ -430,6 +319,10 @@ def client():
  # sets filename and path to write to
  # Starts appropriate server method based on system arguments
  # After server is done running, prints throughput and total amount of bytes sent.
+ 
+ #Starts the server if selected
+ #Creates the UDP socket and binds it
+ #Then does the handshake and if successfull starts the filesharing function
 
 def server():
     serverSocket = socket(AF_INET, SOCK_DGRAM)      # Create a UDP socket for the server
@@ -437,7 +330,6 @@ def server():
     serverPort = args.port
 
     global expected_seq_num
-    global testCase
     global skipped_ack
     global recv_buffer
 
@@ -462,12 +354,10 @@ def server():
     file = open(f'{file_path}', "wb")       # Open the file in write binary mode for writing the received data
 
     expected_seq_num = 0
-    testCase = args.testCase
     skipped_ack = False
     recv_buffer = []    # Buffer to store received packets for selective repeat method
 
     while True:
-        #Common for all 3 methods
         received_packet, clientAddress = serverSocket.recvfrom(packet_size)
         header = received_packet[:header_size]
         data = received_packet[header_size:]    # Extract the data from the received packet
@@ -484,7 +374,7 @@ def server():
                 start_time = time.time()        # Record the start time of the transmission
                 continue
 
-        gbnSwServer(serverSocket, clientAddress, file, recv_seq, data)
+        serverFileSharing(serverSocket, clientAddress, file, recv_seq, data)
              # Else run selective-repeat server
 
         received_bytes += len(received_packet[header_size:])
@@ -492,7 +382,7 @@ def server():
         
     restructFile(file)
    
-    if(not args.testCase and start_time is not None):       
+    if(start_time is not None):       
         # Calculate the throughput
         throughput = calculateThroughput(start_time, end_time, received_bytes)
         print("Received bytes:", received_bytes)
@@ -500,11 +390,9 @@ def server():
     # Close socket connection
     serverSocket.close()
 
- # Description: 
- # Main
- # parses all the system arguments and prints accordingly if they are written wrong, or if help is asked for.
- # Runs server or client based on system arguments
- # Informs user that the application must run in either server or client if both or neither are used.
+ #Main
+ #Parses all of the system arguments and checks if the server or client selections are wrong
+ #If correct it starts the server or client
 
 def main ():
     global args
@@ -515,8 +403,8 @@ def main ():
     parser.add_argument('-c', '--client', action='store_true', help='Runs in client mode')
     parser.add_argument('-i', '--serverIP', type=check_IP, default='127.0.0.1', help='Server IP to bind to. Must use dotted decimal notation')
     parser.add_argument('-p', '--port', type=check_port, default=8080, help='Port number to listen on/connect to. Must be in the range [1024, 65535]')
-    parser.add_argument('-t', '--testCase', type=check_testCase, choices=('skip_ack', 'skip_seq_num'), help='Testcases to show the efficiency of the code')
-    parser.add_argument('-w', '--windowSize', type=check_windowSize, choices=(3, 5, 10), default=5, help='Window size used for reliable transmission with GBN or SR')
+    parser.add_argument('-d', '--discard', type=int, default=-1, help='Testcases to show the efficiency of the code')
+    parser.add_argument('-w', '--windowSize', type=check_windowSize, choices=(3, 5, 10), default=5, help='Window size used')
     parser.add_argument('-f', '--file', required=True, help='File to transfer (client) and file to be saved (server)')
 
     args = parser.parse_args()
